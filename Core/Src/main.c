@@ -1,32 +1,33 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2025 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "LS027B7DH01.h"
+#include "image2.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+LS027B7DH01 MemDisp;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -64,12 +65,10 @@ static void MX_TIM15_Init(void);
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
-int main(void)
-{
-
+ * @brief  The application entry point.
+ * @retval int
+ */
+int main(void) {
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -98,15 +97,26 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
-
+  /* Pinout (MCU -> Display)
+   * PA5  -> SCLK
+   * PA7 -> SI
+   * PB14 -> SCS
+   * ???? -> EXTCOMIN
+   * PB15 -> DISP
+   */
+  // ALL GPIO AND BUSES MUST BE INITED BEFORE CALL THIS FUNCTION
+  LCD_Init(&MemDisp, &hspi1, SCS_PIN_GPIO_Port, SCS_PIN_Pin, DISP_PIN_Pin, &htim15, TIM_CHANNEL_1);
+  HAL_Delay(1000);
+  // LCD_LoadPart((uint8_t *)GawrGura,10,1,30,240); //Sauce : @NotSafeForCode
+  LCD_LoadFull((uint8_t *) image);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-	  HAL_GPIO_TogglePin(led_GPIO_Port, led_Pin);
-	  HAL_Delay(100);
+  while (1) {
+    // HAL_GPIO_TogglePin(led_GPIO_Port, led_Pin);
+    HAL_Delay(10);
+    LCD_Update(&MemDisp);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -115,27 +125,27 @@ int main(void)
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
-{
+ * @brief System Clock Configuration
+ * @retval None
+ */
+void SystemClock_Config(void) {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Supply configuration update enable
-  */
+   */
   HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
 
   /** Configure the main internal regulator output voltage
-  */
+   */
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
 
-  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+  while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {
+  }
 
   /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
+   * in the RCC_OscInitTypeDef structure.
+   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
   RCC_OscInitStruct.HSICalibrationValue = 64;
@@ -149,16 +159,14 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
   RCC_OscInitStruct.PLL.PLLFRACN = 0;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
     Error_Handler();
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
-                              |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2 |
+                                RCC_CLOCKTYPE_D3PCLK1 | RCC_CLOCKTYPE_D1PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV1;
@@ -167,20 +175,17 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV1;
   RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
-  {
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK) {
     Error_Handler();
   }
 }
 
 /**
-  * @brief SPI1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_SPI1_Init(void)
-{
-
+ * @brief SPI1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_SPI1_Init(void) {
   /* USER CODE BEGIN SPI1_Init 0 */
 
   /* USER CODE END SPI1_Init 0 */
@@ -191,7 +196,7 @@ static void MX_SPI1_Init(void)
   /* SPI1 parameter configuration*/
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES_TXONLY;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
@@ -200,35 +205,23 @@ static void MX_SPI1_Init(void)
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 0x0;
-  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-  hspi1.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
-  hspi1.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
-  hspi1.Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi1.Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi1.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
-  hspi1.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
-  hspi1.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-  hspi1.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
-  hspi1.Init.IOSwap = SPI_IO_SWAP_DISABLE;
-  if (HAL_SPI_Init(&hspi1) != HAL_OK)
-  {
+  hspi1.Init.CRCPolynomial = 7;
+  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK) {
     Error_Handler();
   }
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
-
 }
 
 /**
-  * @brief TIM15 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM15_Init(void)
-{
-
+ * @brief TIM15 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM15_Init(void) {
   /* USER CODE BEGIN TIM15_Init 0 */
 
   /* USER CODE END TIM15_Init 0 */
@@ -240,77 +233,71 @@ static void MX_TIM15_Init(void)
 
   /* USER CODE END TIM15_Init 1 */
   htim15.Instance = TIM15;
-  htim15.Init.Prescaler = 0;
+  htim15.Init.Prescaler = 64000 - 1;
   htim15.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim15.Init.Period = 65535;
+  htim15.Init.Period = 20 - 1;
   htim15.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim15.Init.RepetitionCounter = 0;
   htim15.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim15) != HAL_OK)
-  {
+  if (HAL_TIM_Base_Init(&htim15) != HAL_OK) {
     Error_Handler();
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim15, &sClockSourceConfig) != HAL_OK)
-  {
+  if (HAL_TIM_ConfigClockSource(&htim15, &sClockSourceConfig) != HAL_OK) {
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim15, &sMasterConfig) != HAL_OK)
-  {
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim15, &sMasterConfig) != HAL_OK) {
     Error_Handler();
   }
   /* USER CODE BEGIN TIM15_Init 2 */
 
   /* USER CODE END TIM15_Init 2 */
-
 }
 
 /**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
+ * @brief GPIO Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_GPIO_Init(void) {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
+  /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, SCS_PIN_Pin|DISP_PIN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, SCS_PIN_Pin | DISP_PIN_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : SCS_PIN_Pin DISP_PIN_Pin */
-  GPIO_InitStruct.Pin = SCS_PIN_Pin|DISP_PIN_Pin;
+  /*Configure GPIO pins : SCS_Pin DISP_PIN_Pin */
+  GPIO_InitStruct.Pin = SCS_PIN_Pin | DISP_PIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
 
- /* MPU Configuration */
+/* MPU Configuration */
 
-void MPU_Config(void)
-{
+void MPU_Config(void) {
   MPU_Region_InitTypeDef MPU_InitStruct = {0};
 
   /* Disables the MPU */
   HAL_MPU_Disable();
 
   /** Initializes and configures the Region and the memory to be protected
-  */
+   */
   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
   MPU_InitStruct.Number = MPU_REGION_NUMBER0;
   MPU_InitStruct.BaseAddress = 0x0;
@@ -326,34 +313,30 @@ void MPU_Config(void)
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
   /* Enables the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
-
 }
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
-void Error_Handler(void)
-{
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
+void Error_Handler(void) {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  while (1)
-  {
+  while (1) {
   }
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
+void assert_failed(uint8_t *file, uint32_t line) {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
