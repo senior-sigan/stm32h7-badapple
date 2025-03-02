@@ -8,9 +8,9 @@
 #define SCR_H 240  // height
 
 // Display commands
-#define SMLCD_CMD_WRITE ((uint8_t) 0x80)  // Write line
+#define SMLCD_CMD_WRITE ((uint8_t) 0x93)  // Write line
 #define SMLCD_CMD_VCOM ((uint8_t) 0x40)   // VCOM bit (not a command in fact)
-#define SMLCD_CMD_CLS ((uint8_t) 0x20)    // Clear the screen to all white
+#define SMLCD_CMD_CLS ((uint8_t) 0x56)    // Clear the screen to all white
 #define SMLCD_CMD_NOP ((uint8_t) 0x00)    // No command
 
 // This typedef holds the hardware parameters. For GPIO and SPI
@@ -23,10 +23,13 @@ typedef struct {
   uint16_t LCDon;
 } LS027B7DH01;
 
-void LCD_Init(LS027B7DH01* memDisp, SPI_HandleTypeDef* bus, GPIO_TypeDef* dispGPIO, uint16_t scs, uint16_t lcdOn,
+void LCD_Init(LS027B7DH01* memDisp, SPI_HandleTypeDef* bus,
+			  GPIO_TypeDef* dispGPIO, uint16_t scs, uint16_t lcdOn,
               TIM_HandleTypeDef* timerX, uint32_t comPWM);
 
 void LCD_Update(LS027B7DH01* MemDisp);
+
+void LCD_ToggleVCOM(LS027B7DH01* MemDisp);
 
 void LCD_BufClean(void);
 
