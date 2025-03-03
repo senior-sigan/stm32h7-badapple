@@ -6,7 +6,7 @@
 
 static uint8_t LCD_BIT_VCOM = 0x40;
 static uint8_t LCD_CMD_CLEAR = 0x20;
-static uint8_t LCD_CMD_UPDATE = 0x88;
+static uint8_t LCD_CMD_UPDATE = 0x80;
 static uint8_t LCD_CMD_NOP = 0x00;
 static uint8_t SMLCD_VCOM = 0x00;
 
@@ -38,26 +38,21 @@ __STATIC_INLINE uint8_t __reverse8bit(uint8_t byte) {
 	return (uint8_t)(__RBIT(byte) >> 24);
 }
 
+static uint8_t msg[54];
+
 // Display Initialization
 void LCD_Init(LS027B7DH01* MemDisp, SPI_HandleTypeDef* Bus,
-			  GPIO_TypeDef* dispGPIO, uint16_t LCDcs, uint16_t LCDon,
-              TIM_HandleTypeDef* TimerX, uint32_t COMpwm) {
+			  GPIO_TypeDef* dispGPIO, uint16_t LCDcs, uint16_t LCDon) {
   // Store params into our struct
   MemDisp->Bus = Bus;
   MemDisp->dispGPIO = dispGPIO;
-  MemDisp->TimerX = TimerX;
-  MemDisp->COMpwm = COMpwm;
   MemDisp->LCDcs = LCDcs;
   MemDisp->LCDon = LCDon;
 
   memset(DispBuf, 0xFF, sizeof(DispBuf));
 
   HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDon, GPIO_PIN_SET);  // Turn display back on
-  HAL_Delay(10);
-
-  // Start 50Hz PWM for COM inversion of the display
-//  HAL_TIM_PWM_Start(MemDisp->TimerX, MemDisp->COMpwm);
-//  MemDisp->TimerX->Instance->CCR1 = 5;
+  HAL_Delay(100);
 
   LCD_Clean(MemDisp);
 }
@@ -72,11 +67,7 @@ void LCD_ToggleVCOM(LS027B7DH01* MemDisp) {
 
 // Display update (Transmit data)
 void LCD_Update(LS027B7DH01* MemDisp) {
-
-
   uint8_t* ptr = DispBuf;
-
-//  uint8_t msg[54];
 
 //  memset(msg, LCD_CMD_NOP, sizeof(msg));
 //  msg[0] = 0x01;
@@ -91,35 +82,37 @@ void LCD_Update(LS027B7DH01* MemDisp) {
 //  HAL_Delay(1);
 //  HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_RESET);
 
-//  msg[0] = LCD_CMD_UPDATE;
-//  for (uint8_t line = 0; line < SCR_H; line++) {
-//	msg[1] = LUT_LINE[line + 1];
-//	memcpy(msg + 2, ptr, DATA_LINE_LEN);
-//	ptr += DATA_LINE_LEN;
-//
-//    HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_SET);  // Begin
-//    HAL_SPI_Transmit(MemDisp->Bus, msg, sizeof(msg), 150);
-//    HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_RESET);  // Done
-//
-//    // just for rendering debugging
-//    HAL_Delay(10);
-//  }
-
-  uint8_t cmd[2] = {LCD_CMD_UPDATE, 0x00};
-  uint8_t trailer[2] = {LCD_CMD_NOP, LCD_CMD_NOP};
+  msg[0] = LCD_CMD_UPDATE;
+  msg[52] = LCD_CMD_NOP;
+  msg[53] = LCD_CMD_NOP;
   for (uint8_t line = 0; line < SCR_H; line++) {
-	  cmd[1] = LUT_LINE[line + 1];
+	msg[1] = LUT_LINE[line];
+	memcpy(msg + 2, ptr, DATA_LINE_LEN);
+	ptr += DATA_LINE_LEN;
 
-      HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_SET);  // Begin
-      HAL_SPI_Transmit(MemDisp->Bus, cmd, 2, 0);
-      HAL_SPI_Transmit(MemDisp->Bus, ptr, DATA_LINE_LEN, 0);
-      HAL_SPI_Transmit(MemDisp->Bus, trailer, 2, 0);
-      HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_RESET);  // Done
+    HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_SET);  // Begin
+    HAL_SPI_Transmit(MemDisp->Bus, msg, sizeof(msg), 150);
+    HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_RESET);  // Done
 
-      ptr += DATA_LINE_LEN;
-      // just for rendering debugging
-      HAL_Delay(10);
+    // just for rendering debugging
+    HAL_Delay(10);
   }
+
+//  uint8_t cmd[2] = {LCD_CMD_UPDATE, 0x00};
+//  uint8_t trailer[2] = {LCD_CMD_NOP, LCD_CMD_NOP};
+//  for (uint8_t line = 0; line < SCR_H; line++) {
+//	  cmd[1] = LUT_LINE[line];
+//
+//      HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_SET);  // Begin
+//      HAL_SPI_Transmit(MemDisp->Bus, cmd, 2, HAL_MAX_DELAY);
+//      HAL_SPI_Transmit(MemDisp->Bus, ptr, DATA_LINE_LEN, HAL_MAX_DELAY);
+//      HAL_SPI_Transmit(MemDisp->Bus, trailer, 2, HAL_MAX_DELAY);
+//      HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_RESET);  // Done
+//
+//      ptr += DATA_LINE_LEN;
+//      // just for rendering debugging
+//      HAL_Delay(10);
+//  }
 
 }
 

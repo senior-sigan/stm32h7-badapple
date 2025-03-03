@@ -17,15 +17,12 @@
 typedef struct {
   SPI_HandleTypeDef* Bus;
   GPIO_TypeDef* dispGPIO;
-  TIM_HandleTypeDef* TimerX;
-  uint32_t COMpwm;
   uint16_t LCDcs;
   uint16_t LCDon;
 } LS027B7DH01;
 
 void LCD_Init(LS027B7DH01* memDisp, SPI_HandleTypeDef* bus,
-			  GPIO_TypeDef* dispGPIO, uint16_t scs, uint16_t lcdOn,
-              TIM_HandleTypeDef* timerX, uint32_t comPWM);
+			  GPIO_TypeDef* dispGPIO, uint16_t scs, uint16_t lcdOn);
 
 void LCD_Update(LS027B7DH01* MemDisp);
 
