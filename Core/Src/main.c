@@ -63,7 +63,7 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t MSG[] = "DEADBEAF";
+#define MSG "DEADBEEF"
 #ifdef __GNUC__
 /* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -131,7 +131,9 @@ int main(void)
   LCD_ToggleVCOM(&MemDisp);
   HAL_Delay(10);
   while (1) {
-    printf("DEADBEAF\n");
+    printf(MSG"\n");
+    LCD_Clean(&MemDisp);
+    HAL_Delay(10);
     LCD_Update(&MemDisp);
     HAL_Delay(1000);
 
@@ -221,7 +223,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES_TXONLY;
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
