@@ -21,6 +21,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <sys/time.h>
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+#include "luaCode.h"
 #include "LS027B7DH01.h"
 #include "image2.h"
 #include "stdio.h"
@@ -28,7 +33,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-LS027B7DH01 MemDisp;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -48,7 +52,8 @@ SPI_HandleTypeDef hspi1;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+static LS027B7DH01 MemDisp;
+static lua_State* L;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,7 +63,7 @@ static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+void CallFunc(const char*);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -123,6 +128,9 @@ int main(void)
   LCD_Init(&MemDisp, &hspi1, SCS_PIN_GPIO_Port, SCS_PIN_Pin, DISP_PIN_Pin);
   // LCD_LoadPart((uint8_t *)GawrGura,10,1,30,240); //Sauce : @NotSafeForCode
   LCD_LoadFull((uint8_t *) image);
+  L = luaL_newstate();
+  luaL_openlibs(L);
+  luaL_dostring(L, luaCode);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -132,6 +140,7 @@ int main(void)
   HAL_Delay(10);
   while (1) {
     printf(MSG"\n");
+    CallFunc("Update");
     LCD_Clean(&MemDisp);
     HAL_Delay(10);
     LCD_Update(&MemDisp);
@@ -349,6 +358,25 @@ PUTCHAR_PROTOTYPE {
 
   return ch;
 }
+
+void CallFunc(const char* name) {
+  lua_getglobal(L, name);
+  if (lua_isfunction(L, -1)) {
+    if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+      const char* msg = lua_tostring(L, -1);
+      printf("[error] lua: %s", msg);
+    }
+  } else {
+    printf("[error] lua: %s is not a function", name);
+  }
+}
+
+int _gettimeofday(struct timeval *tv, void *tzvp )
+{
+    printf("[error] _gettimeofday\n");
+    // you can add code here there many example in google search. 
+    return 0;  // return non-zero for error
+} // end _gettimeofday()
 
 /* USER CODE END 4 */
 
