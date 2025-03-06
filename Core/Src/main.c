@@ -371,12 +371,14 @@ void CallFunc(const char* name) {
   }
 }
 
-int _gettimeofday(struct timeval *tv, void *tzvp )
-{
-    printf("[error] _gettimeofday\n");
-    // you can add code here there many example in google search. 
+int _gettimeofday(struct timeval *tv, void *tzvp ) {
+    // TODO: add real clock
+    // our time starts since the start of the micro-controller
+    uint32_t tick = HAL_GetTick();
+    tv->tv_sec = tick / 1000;
+    tv->tv_usec = tick % 1000;
     return 0;  // return non-zero for error
-} // end _gettimeofday()
+}
 
 /* USER CODE END 4 */
 
