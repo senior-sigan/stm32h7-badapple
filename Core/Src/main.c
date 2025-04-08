@@ -146,13 +146,13 @@ int main(void)
     LCD_Update(&MemDisp);
     HAL_Delay(1000);
 
-    if (HAL_GPIO_ReadPin(BTN_UP_GPIO_Port, BTN_UP_Pin) == GPIO_PIN_SET) {
+    if (HAL_GPIO_ReadPin(BTN_UP_GPIO_Port, BTN_UP_Pin) == GPIO_PIN_RESET) {
         printf("BTN_UP\n");
     }
-    if (HAL_GPIO_ReadPin(BTN_LEFT_GPIO_Port, BTN_LEFT_Pin) == GPIO_PIN_SET) {
+    if (HAL_GPIO_ReadPin(BTN_LEFT_GPIO_Port, BTN_LEFT_Pin) == GPIO_PIN_RESET) {
         printf("BTN_LEFT\n");
     }
-    if (HAL_GPIO_ReadPin(BTN_OP1_GPIO_Port, BTN_OP1_Pin) == GPIO_PIN_SET) {
+    if (HAL_GPIO_ReadPin(BTN_OP1_GPIO_Port, BTN_OP1_Pin) == GPIO_PIN_RESET) {
         printf("BTN_OP_1\n");
     }
 
