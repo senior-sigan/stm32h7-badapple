@@ -146,6 +146,17 @@ int main(void)
     LCD_Update(&MemDisp);
     HAL_Delay(1000);
 
+    if (HAL_GPIO_ReadPin(BTN_UP_GPIO_Port, BTN_UP_Pin) == GPIO_PIN_SET) {
+        printf("BTN_UP\n");
+    }
+    if (HAL_GPIO_ReadPin(BTN_LEFT_GPIO_Port, BTN_LEFT_Pin) == GPIO_PIN_SET) {
+        printf("BTN_LEFT\n");
+    }
+    if (HAL_GPIO_ReadPin(BTN_OP1_GPIO_Port, BTN_OP1_Pin) == GPIO_PIN_SET) {
+        printf("BTN_OP_1\n");
+    }
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -232,7 +243,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES_TXONLY;
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
@@ -320,11 +331,18 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SCS_PIN_Pin|DISP_PIN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : BTN_LEFT_Pin BTN_UP_Pin */
+  GPIO_InitStruct.Pin = BTN_LEFT_Pin|BTN_UP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SCS_PIN_Pin */
   GPIO_InitStruct.Pin = SCS_PIN_Pin;
@@ -339,6 +357,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(DISP_PIN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BTN_OP1_Pin */
+  GPIO_InitStruct.Pin = BTN_OP1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(BTN_OP1_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
